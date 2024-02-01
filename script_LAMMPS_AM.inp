@@ -1,0 +1,119 @@
+### command to run recurssively for AM simulation
+### Delete previous fix, region, group etc. before redefining
+
+### delete the bottom atom righ at the begining and reassign before the next run for T-control
+delete_atoms region BlockDeleteAtomsBottom_01
+
+unfix 1
+unfix fPushParticles
+unfix fLangevin
+region BlockInside delete
+group GroupInside delete
+region BlockDeleteAtomsBottom_01 delete
+group GroupDeleteAtomsBottom_01 delete
+region BlockCreateAtomsTop_01 delete
+group GroupCreateAtomsTop_01 delete
+
+variable delta_y equal (step/${nrun})*${Height}
+if "${nAtomsAll} > ${nAtomsInitial}" then &
+"variable y1 equal ${y1}+${Height}" # This will make sure that total number of atom is close to initial atoms
+variable y2 equal ${y2}+${Height}
+variable y3 equal ${y3}+${Height}
+variable y_Inside equal ${y1}+2
+
+### update other regions
+region		BlockDeleteAtomsBottom_01 block INF INF INF ${y1} INF INF # delete all atom down the interface
+region		BlockCreateAtomsTop_01 block INF INF ${y2} ${y3} INF INF
+region		BlockInside block INF INF ${y_Inside} INF INF INF
+
+###----create atoms i.e, spherical powder particles in a loop-----
+print "*** Powder particle creation begins***"
+variable nParticles equal floor(${lx}/(${Height})) # square box shaped
+variable radiusIdeal equal ${Height}/2 
+variable vloopParticle loop ${nParticles}
+label labelParticleCreation
+print "Grain creation loop: ${vloopParticle}"
+variable perturb01 equal v_random01
+if "(${vloopParticle} == 0) || (${vloopParticle} == ${nParticles})" then "variable perturb01 equal 0.00"
+
+variable radius equal (0.75+0.25*${perturb01})*${radiusIdeal}
+variable temp01 equal ${perturb01}*${radiusIdeal}  #((step/${nrun})%2)*${radius}
+variable temp02 equal 2*${radiusIdeal}*(${vloopParticle}-1)+${radiusIdeal}
+variable cx equal ${temp01}+${temp02} #((step/${nrun})%2)*10 + 100*${vloopParticle} - 50
+variable cy equal (${y2}+${y3})/2
+variable cz equal (${z2}+${z3})/2
+print "Grain parameters cx: ${cx} cy: ${cy} cz: ${cz} radius: ${radius}"
+region Particle sphere ${cx} ${cy} ${cz} ${radius}
+
+create_atoms 1 region Particle
+group Particle region Particle
+
+variable theta_z equal ${random01}*90  # angle to rotate the grain
+displace_atoms Particle rotate ${cx} ${cy} ${cz} 0 0 1 ${theta_z} # rotate wrt z-axis
+
+group GroupCreateAtomsTop_01 union GroupCreateAtomsTop_01 Particle
+region Particle delete
+group Particle delete
+
+next vloopParticle
+jump SELF labelParticleCreation
+
+### Assign velocity/Temperature to the newly created atoms
+#group GroupCreateAtomsTop_01 region BlockCreateAtomsTop_01
+delete_atoms overlap 2.25 GroupCreateAtomsTop_01 all  # atoms from the first group will be deleted
+velocity	GroupCreateAtomsTop_01 create ${T2} 187723 #temp Temperature # assign velocity of the newly created atoms
+
+### Redefine the group, fix etc.
+group GroupDeleteAtomsBottom_01 region BlockDeleteAtomsBottom_01
+group GroupInside region BlockInside
+#fix 1 GroupInside nve
+fix  1 GroupInside npt temp $T $T 0.2 drag 0.5 x 0.0 0.0 5 z 0.0 0.0 5 couple none
+fix fPushParticles GroupCreateAtomsTop_01 addforce 0.0 -0.2 0.0 every 1
+fix fLangevin GroupDeleteAtomsBottom_01 langevin ${T} ${T} 0.5 123456
+
+print "nAtomsAll: ${nAtomsAll}; nAtomsInitial: ${nAtomsInitial}; nAtomsNew: ${nAtomsNew}"
+
+balance 1.1 rcb  # load balancing
+
+run ${nrun}
+
+###----mimic the short pulse of laser to a localized region----
+print "*** Laser pulse begins***"
+## Create ellipsoidal region of atoms
+variable ellipse_a equal ${Height}/2 # spread of laser shot
+variable ellipse_b equal 2*${Height} # depth of laser shot, melt-pool depth for SLM
+variable ellipse_c equal ${ellipse_a}
+
+variable DistanceLaserShot equal 1.0*${Height}  # center to center distance between laser shots
+variable nLaserShot equal floor(${lx}/${DistanceLaserShot})
+variable vloopLaser loop ${nLaserShot}
+label labelLaserPulse
+print "Laser loop: ${vloopLaser}"
+
+variable temp01 equal 0.00 #((step/${nrun})%2)*${Height}
+variable temp02 equal ${DistanceLaserShot}*(${vloopLaser}-1)+${Height}/2
+variable cx equal ${temp01}+${temp02} #((step/${nrun})%2)*10 + 100*${vloopLaser} - 50
+variable cy equal ${y3}
+variable cz equal (${z2}+${z3})/2
+region AreaLaser01 ellipsoid ${cx} ${cy} ${cz} ${ellipse_a} ${ellipse_b} ${ellipse_c}
+group AreaLaser01 region AreaLaser01
+#delete_atoms group AreaLaser01
+displace_atoms AreaLaser01 random 0.05 0.1 0.05 123456
+run ${nrun}
+
+region AreaLaser01 delete
+group AreaLaser01 delete
+
+next vloopLaser
+jump SELF labelLaserPulse
+
+print "*** Idle run begins***"
+run ${nrunIdle}
+
+print "******LAMMPS loop finished******"
+
+
+jump script_LAMMPS_Basic.inp labelAMLoop
+
+
+
