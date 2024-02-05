@@ -1,6 +1,8 @@
-# This contains the iput scripts and related files to run a concurrent coupled simulation using MOOSE-LAMMPS 'Discoflux' model. MOOSE is the driving code and LAMMPS used as library.
+# This contains the input scripts and related files only to run a concurrent coupled simulation using MOOSE-LAMMPS 'Discoflux' model. MOOSE is the driving code and LAMMPS used as library.
 
-The code and executable is located at "/users/schakraborty/MyRepository/moose_lammps/"
+The code and executable is located at "/lustre/scratch5/schakraborty/MyRepository/moose_lammps/"
+
+To build that code, first checkout the main moose to branch 'CP-CDT-LAMMPS'.
 
 clone this repo to /lustre/scratch5/schakraborty/MySimulations/
 
