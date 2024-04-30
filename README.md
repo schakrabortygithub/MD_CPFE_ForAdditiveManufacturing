@@ -12,9 +12,9 @@ This is concurrent multiscale model developed by coupling Molecular Dynamics(LAM
 
 # Simulation results
 ![Coupling Scheme](https://github.com/schakrabortygithub/moose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_CouplingScheme.jpg?raw=true)
-![Coupling Scheme](https://github.com/schakrabortygithub/oose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_DefectStraucture.jpg?raw=true)
-![Coupling Scheme](https://github.com/schakrabortygithub/oose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_Defects.jpg?raw=true)
-![Coupling Scheme](https://github.com/schakrabortygithub/oose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_EnergyTotal.jpg?raw=true)
+![Coupling Scheme](https://github.com/schakrabortygithub/moose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_DefectStraucture.jpg?raw=true)
+![Coupling Scheme](https://github.com/schakrabortygithub/moose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_Defects.jpg?raw=true)
+![Coupling Scheme](https://github.com/schakrabortygithub/moose-lammps-simulations/blob/master/SimulationResults/MD-CP_ForAM_EnergyTotal.jpg?raw=true)
 
 # Build Process
 First in the main 'moose', checkout to branch "CP_CDT_LAMMPS".
